@@ -1,7 +1,14 @@
 require("dotenv").config();
 
+const express = require("express");
 const TelegramBot = require("node-telegram-bot-api");
 const OpenAI = require("openai");
+
+const app = express();
+app.use(express.json());
+
+const PORT = process.env.PORT || 8080;
+const VERIFY_TOKEN = "startupx_verify_123";
 
 const bot = new TelegramBot(process.env.TELEGRAM_BOT_TOKEN, {
   polling: true,
@@ -9,6 +16,29 @@ const bot = new TelegramBot(process.env.TELEGRAM_BOT_TOKEN, {
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
+});
+
+/* ✅ Meta Instagram Webhook Verification */
+app.get("/webhook", (req, res) => {
+  const mode = req.query["hub.mode"];
+  const token = req.query["hub.verify_token"];
+  const challenge = req.query["hub.challenge"];
+
+  if (mode === "subscribe" && token === VERIFY_TOKEN) {
+    console.log("✅ Meta webhook verified");
+    return res.status(200).send(challenge);
+  }
+
+  console.log("❌ Meta webhook verification failed");
+  res.sendStatus(403);
+});
+
+/* ✅ Receive Instagram webhook events */
+app.post("/webhook", (req, res) => {
+  console.log("📩 Instagram webhook event received:");
+  console.log(JSON.stringify(req.body, null, 2));
+
+  res.sendStatus(200);
 });
 
 let messageCount = 0;
@@ -103,12 +133,9 @@ bot.onText(/\/rules/, (msg) => {
 });
 
 bot.onText(/\/growth/, (msg) => {
-  bot.sendMessage(
-    msg.chat.id,
-    `📊 Ecosystem Growth
+  bot.sendMessage(msg.chat.id, `📊 Ecosystem Growth
 
-Messages tracked: ${messageCount}`
-  );
+Messages tracked: ${messageCount}`);
 });
 
 bot.on("message", async (msg) => {
@@ -159,6 +186,10 @@ Important knowledge:
 
 bot.on("polling_error", (error) => {
   console.error("Polling error:", error.message);
+});
+
+app.listen(PORT, () => {
+  console.log(`🌐 Webhook server running on port ${PORT}`);
 });
 
 console.log("StartupX AI bot is running...");
