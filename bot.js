@@ -7,9 +7,6 @@ const OpenAI = require("openai");
 const app = express();
 app.use(express.json());
 
-const PORT = process.env.PORT || 8080;
-const VERIFY_TOKEN = "startupx_verify_123";
-
 const bot = new TelegramBot(process.env.TELEGRAM_BOT_TOKEN, {
   polling: true,
 });
@@ -18,35 +15,124 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-/* ✅ Meta Instagram Webhook Verification */
+const PORT = process.env.PORT || 8080;
+
+let messageCount = 0;
+
+/* =========================
+   WEBHOOK VERIFICATION
+========================= */
+
 app.get("/webhook", (req, res) => {
+  const VERIFY_TOKEN = "startupx_verify_123";
+
   const mode = req.query["hub.mode"];
   const token = req.query["hub.verify_token"];
   const challenge = req.query["hub.challenge"];
 
-  if (mode === "subscribe" && token === VERIFY_TOKEN) {
-    console.log("✅ Meta webhook verified");
+  if (mode && token === VERIFY_TOKEN) {
+    console.log("Instagram Webhook Verified");
     return res.status(200).send(challenge);
   }
 
-  console.log("❌ Meta webhook verification failed");
   res.sendStatus(403);
 });
 
-/* ✅ Receive Instagram webhook events */
-app.post("/webhook", (req, res) => {
-  console.log("📩 Instagram webhook event received:");
-  console.log(JSON.stringify(req.body, null, 2));
+/* =========================
+   INSTAGRAM WEBHOOK EVENTS
+========================= */
 
-  res.sendStatus(200);
+app.post("/webhook", async (req, res) => {
+  try {
+    const body = req.body;
+
+    if (body.object === "instagram") {
+      for (const entry of body.entry) {
+        for (const event of entry.messaging || []) {
+          if (event.message && event.message.text) {
+            const senderId = event.sender.id;
+            const userMessage = event.message.text;
+
+            console.log("Instagram Message:", userMessage);
+
+            const response = await openai.chat.completions.create({
+              model: "gpt-4o-mini",
+              messages: [
+                {
+                  role: "system",
+                  content: `
+You are StartupX AI, a friendly and helpful AI assistant.
+
+Important knowledge:
+- X Corp refers to X Corp Edutech in Singapore.
+- X Corp Edutech is an education technology company.
+- Website: https://www.xcorp.sg
+- Focus on startups, AI, education, Web3, innovation, and student learning.
+- Keep replies modern, concise, friendly, and conversational.
+                  `,
+                },
+                {
+                  role: "user",
+                  content: userMessage,
+                },
+              ],
+            });
+
+            const aiReply =
+              response.choices[0].message.content ||
+              "Sorry, I could not generate a reply.";
+
+            await sendInstagramMessage(senderId, aiReply);
+          }
+        }
+      }
+    }
+
+    res.sendStatus(200);
+  } catch (error) {
+    console.error("Webhook Error:", error.message);
+    res.sendStatus(500);
+  }
 });
 
-let messageCount = 0;
+/* =========================
+   SEND INSTAGRAM MESSAGE
+========================= */
+
+async function sendInstagramMessage(recipientId, messageText) {
+  try {
+    await fetch(
+      `https://graph.facebook.com/v25.0/me/messages?access_token=${process.env.INSTAGRAM_PAGE_ACCESS_TOKEN}`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          recipient: {
+            id: recipientId,
+          },
+          message: {
+            text: messageText,
+          },
+        }),
+      }
+    );
+
+    console.log("Instagram reply sent");
+  } catch (error) {
+    console.error("Instagram send error:", error.message);
+  }
+}
+
+/* =========================
+   TELEGRAM COMMANDS
+========================= */
 
 bot.onText(/\/start/, (msg) => {
   bot.sendMessage(
     msg.chat.id,
-    "🚀 Hi, I’m StartupX AI — your AI-powered Telegram assistant."
+    "🚀 Hi, I’m StartupX AI — your AI-powered assistant."
   );
 });
 
@@ -56,18 +142,18 @@ bot.onText(/\/help/, (msg) => {
     `🤖 StartupX AI Commands
 
 /xcorp - Learn about X Corp
-/grants - View Singapore startup grants summary
+/grants - View Singapore startup grants
 /founder - Founder support
-/viral - Generate viral content idea
+/viral - Viral content idea
 /rules - Community rules
 /growth - Ecosystem growth tracking
 
-You can also chat with me normally like an AI.`
+You can also chat normally with me like an AI.`
   );
 });
 
 bot.onText(/\/xcorp/, (msg) => {
-  bot.sendMessage(msg.chat.id, "🏢 Learn more about X Corp Edutech below:", {
+  bot.sendMessage(msg.chat.id, "🏢 Learn more about X Corp Edutech:", {
     reply_markup: {
       inline_keyboard: [
         [{ text: "🌐 Visit Website", url: "https://www.xcorp.sg" }],
@@ -79,30 +165,26 @@ bot.onText(/\/xcorp/, (msg) => {
 bot.onText(/\/grants/, (msg) => {
   bot.sendMessage(
     msg.chat.id,
-    `🇸🇬 Singapore Startup Grants Summary
+    `🇸🇬 Singapore Startup Grants
 
 1. Startup SG Founder
 2. Startup SG Tech
 3. Enterprise Development Grant
 4. Productivity Solutions Grant
-5. Market Readiness Assistance Grant
-6. Startup SG Equity
-7. IMDA Programmes
-8. SkillsFuture Enterprise Credit`
+5. Market Readiness Assistance`
   );
 });
 
 bot.onText(/\/founder/, (msg) => {
   bot.sendMessage(
     msg.chat.id,
-    `🧠 Founder Support
+    `🧠 Founder Questions
 
-Ask yourself:
 1. What problem are you solving?
 2. Who are you helping?
 3. Why is this urgent?
 4. What is your solution?
-5. How will you get your first users?`
+5. How will you get users?`
   );
 });
 
@@ -111,11 +193,7 @@ bot.onText(/\/viral/, (msg) => {
     msg.chat.id,
     `🔥 Viral Content Idea
 
-Hook:
-"Most startups do not fail because of bad ideas. They fail because they build without users."
-
-Structure:
-Hook → Problem → Lesson → Call-to-action`
+"Most startups don’t fail because of bad ideas. They fail because they build without users."`
   );
 });
 
@@ -127,16 +205,23 @@ bot.onText(/\/rules/, (msg) => {
 1. Be respectful
 2. No spam
 3. No scams
-4. Share useful startup or Web3 knowledge
-5. Support other builders`
+4. Share useful knowledge
+5. Support builders`
   );
 });
 
 bot.onText(/\/growth/, (msg) => {
-  bot.sendMessage(msg.chat.id, `📊 Ecosystem Growth
+  bot.sendMessage(
+    msg.chat.id,
+    `📊 Ecosystem Growth
 
-Messages tracked: ${messageCount}`);
+Messages tracked: ${messageCount}`
+  );
 });
+
+/* =========================
+   TELEGRAM AI CHAT
+========================= */
 
 bot.on("message", async (msg) => {
   if (!msg.text) return;
@@ -154,17 +239,14 @@ bot.on("message", async (msg) => {
         {
           role: "system",
           content: `
-You are StartupX AI, a friendly and helpful Telegram AI assistant.
+You are StartupX AI, a friendly and helpful AI assistant.
 
 Important knowledge:
 - X Corp refers to X Corp Edutech in Singapore.
-- X Corp Edutech is an education technology company.
 - Website: https://www.xcorp.sg
-- The community focuses on startups, AI, education, Web3, innovation, and student learning.
-- If users ask about X Corp, explain X Corp Edutech and do not confuse it with Elon Musk's X.
-- Be friendly, modern, and supportive.
+- Community focuses on startups, AI, education, Web3, and innovation.
 - Keep replies concise and conversational.
-`,
+          `,
         },
         {
           role: "user",
@@ -174,12 +256,14 @@ Important knowledge:
     });
 
     const aiReply = response.choices[0].message.content;
+
     bot.sendMessage(msg.chat.id, aiReply);
   } catch (error) {
     console.error("OpenAI error:", error.message);
+
     bot.sendMessage(
       msg.chat.id,
-      "⚠️ Sorry, I had trouble generating a reply. Please try again."
+      "⚠️ Sorry, I had trouble generating a reply."
     );
   }
 });
@@ -188,8 +272,11 @@ bot.on("polling_error", (error) => {
   console.error("Polling error:", error.message);
 });
 
-app.listen(PORT, () => {
-  console.log(`🌐 Webhook server running on port ${PORT}`);
-});
+/* =========================
+   START SERVER
+========================= */
 
-console.log("StartupX AI bot is running...");
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+  console.log("StartupX AI bot is running...");
+});
