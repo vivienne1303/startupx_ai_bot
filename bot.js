@@ -96,10 +96,13 @@ Important knowledge:
 /* =========================
    SEND INSTAGRAM MESSAGE
 ========================= */
+/* =========================
+   SEND INSTAGRAM MESSAGE
+========================= */
 
 async function sendInstagramMessage(recipientId, messageText) {
   try {
-    const result = await fetch(
+    await fetch(
       `https://graph.facebook.com/v25.0/me/messages?access_token=${process.env.INSTAGRAM_PAGE_ACCESS_TOKEN}`,
       {
         method: "POST",
@@ -118,9 +121,7 @@ async function sendInstagramMessage(recipientId, messageText) {
       }
     );
 
-    const data = await result.json();
-    console.log("Instagram send status:", result.status);
-    console.log("Instagram send response:", data);
+    console.log("Instagram reply sent");
   } catch (error) {
     console.error("Instagram send error:", error.message);
   }
