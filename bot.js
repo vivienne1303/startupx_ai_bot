@@ -7,7 +7,9 @@ const OpenAI = require("openai");
 const app = express();
 app.use(express.json());
 
-// const bot = new TelegramBot(process.env.TELEGRAM_BOT_TOKEN);
+const bot = new TelegramBot(process.env.TELEGRAM_BOT_TOKEN, {
+  polling: true,
+});
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -127,148 +129,148 @@ async function sendInstagramMessage(recipientId, messageText) {
 //    TELEGRAM COMMANDS
 // ========================= */
 
-// bot.onText(/\/start/, (msg) => {
-//   bot.sendMessage(
-//     msg.chat.id,
-//     "🚀 Hi, I’m StartupX AI — your AI-powered assistant."
-//   );
-// });
+bot.onText(/\/start/, (msg) => {
+  bot.sendMessage(
+    msg.chat.id,
+    "🚀 Hi, I’m StartupX AI — your AI-powered assistant."
+  );
+});
 
-// bot.onText(/\/help/, (msg) => {
-//   bot.sendMessage(
-//     msg.chat.id,
-//     `🤖 StartupX AI Commands
+bot.onText(/\/help/, (msg) => {
+  bot.sendMessage(
+    msg.chat.id,
+    `🤖 StartupX AI Commands
 
-// /xcorp - Learn about X Corp
-// /grants - View Singapore startup grants
-// /founder - Founder support
-// /viral - Viral content idea
-// /rules - Community rules
-// /growth - Ecosystem growth tracking
+/xcorp - Learn about X Corp
+/grants - View Singapore startup grants
+/founder - Founder support
+/viral - Viral content idea
+/rules - Community rules
+/growth - Ecosystem growth tracking
 
-// You can also chat normally with me like an AI.`
-//   );
-// });
+You can also chat normally with me like an AI.`
+  );
+});
 
-// bot.onText(/\/xcorp/, (msg) => {
-//   bot.sendMessage(msg.chat.id, "🏢 Learn more about X Corp Edutech:", {
-//     reply_markup: {
-//       inline_keyboard: [
-//         [{ text: "🌐 Visit Website", url: "https://www.xcorp.sg" }],
-//       ],
-//     },
-//   });
-// });
+bot.onText(/\/xcorp/, (msg) => {
+  bot.sendMessage(msg.chat.id, "🏢 Learn more about X Corp Edutech:", {
+    reply_markup: {
+      inline_keyboard: [
+        [{ text: "🌐 Visit Website", url: "https://www.xcorp.sg" }],
+      ],
+    },
+  });
+});
 
-// bot.onText(/\/grants/, (msg) => {
-//   bot.sendMessage(
-//     msg.chat.id,
-//     `🇸🇬 Singapore Startup Grants
+bot.onText(/\/grants/, (msg) => {
+  bot.sendMessage(
+    msg.chat.id,
+    `🇸🇬 Singapore Startup Grants
 
-// 1. Startup SG Founder
-// 2. Startup SG Tech
-// 3. Enterprise Development Grant
-// 4. Productivity Solutions Grant
-// 5. Market Readiness Assistance`
-//   );
-// });
+1. Startup SG Founder
+2. Startup SG Tech
+3. Enterprise Development Grant
+4. Productivity Solutions Grant
+5. Market Readiness Assistance`
+  );
+});
 
-// bot.onText(/\/founder/, (msg) => {
-//   bot.sendMessage(
-//     msg.chat.id,
-//     `🧠 Founder Questions
+bot.onText(/\/founder/, (msg) => {
+  bot.sendMessage(
+    msg.chat.id,
+    `🧠 Founder Questions
 
-// 1. What problem are you solving?
-// 2. Who are you helping?
-// 3. Why is this urgent?
-// 4. What is your solution?
-// 5. How will you get users?`
-//   );
-// });
+1. What problem are you solving?
+2. Who are you helping?
+3. Why is this urgent?
+4. What is your solution?
+5. How will you get users?`
+  );
+});
 
-// bot.onText(/\/viral/, (msg) => {
-//   bot.sendMessage(
-//     msg.chat.id,
-//     `🔥 Viral Content Idea
+bot.onText(/\/viral/, (msg) => {
+  bot.sendMessage(
+    msg.chat.id,
+    `🔥 Viral Content Idea
 
-// "Most startups don’t fail because of bad ideas. They fail because they build without users."`
-//   );
-// });
+"Most startups don’t fail because of bad ideas. They fail because they build without users."`
+  );
+});
 
-// bot.onText(/\/rules/, (msg) => {
-//   bot.sendMessage(
-//     msg.chat.id,
-//     `📌 Community Rules
+bot.onText(/\/rules/, (msg) => {
+  bot.sendMessage(
+    msg.chat.id,
+    `📌 Community Rules
 
-// 1. Be respectful
-// 2. No spam
-// 3. No scams
-// 4. Share useful knowledge
-// 5. Support builders`
-//   );
-// });
+1. Be respectful
+2. No spam
+3. No scams
+4. Share useful knowledge
+5. Support builders`
+  );
+});
 
-// bot.onText(/\/growth/, (msg) => {
-//   bot.sendMessage(
-//     msg.chat.id,
-//     `📊 Ecosystem Growth
+bot.onText(/\/growth/, (msg) => {
+  bot.sendMessage(
+    msg.chat.id,
+    `📊 Ecosystem Growth
 
-// Messages tracked: ${messageCount}`
-//   );
-// });
+Messages tracked: ${messageCount}`
+  );
+});
 
-// /* =========================
-//    TELEGRAM AI CHAT
-// ========================= */
+/* =========================
+   TELEGRAM AI CHAT
+========================= */
 
-// bot.on("message", async (msg) => {
-//   if (!msg.text) return;
+bot.on("message", async (msg) => {
+  if (!msg.text) return;
 
-//   messageCount++;
+  messageCount++;
 
-//   if (msg.text.startsWith("/")) return;
+  if (msg.text.startsWith("/")) return;
 
-//   try {
-//     bot.sendChatAction(msg.chat.id, "typing");
+  try {
+    bot.sendChatAction(msg.chat.id, "typing");
 
-//     const response = await openai.chat.completions.create({
-//       model: "gpt-4o-mini",
-//       messages: [
-//         {
-//           role: "system",
-//           content: `
-// You are StartupX AI, a friendly and helpful AI assistant.
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [
+        {
+          role: "system",
+          content: `
+You are StartupX AI, a friendly and helpful AI assistant.
 
-// Important knowledge:
-// - X Corp refers to X Corp Edutech in Singapore.
-// - Website: https://www.xcorp.sg
-// - Community focuses on startups, AI, education, Web3, and innovation.
-// - Keep replies concise and conversational.
-//           `,
-//         },
-//         {
-//           role: "user",
-//           content: msg.text,
-//         },
-//       ],
-//     });
+Important knowledge:
+- X Corp refers to X Corp Edutech in Singapore.
+- Website: https://www.xcorp.sg
+- Community focuses on startups, AI, education, Web3, and innovation.
+- Keep replies concise and conversational.
+          `,
+        },
+        {
+          role: "user",
+          content: msg.text,
+        },
+      ],
+    });
 
-//     const aiReply = response.choices[0].message.content;
+    const aiReply = response.choices[0].message.content;
 
-//     bot.sendMessage(msg.chat.id, aiReply);
-//   } catch (error) {
-//     console.error("OpenAI error:", error.message);
+    bot.sendMessage(msg.chat.id, aiReply);
+  } catch (error) {
+    console.error("OpenAI error:", error.message);
 
-//     bot.sendMessage(
-//       msg.chat.id,
-//       "⚠️ Sorry, I had trouble generating a reply."
-//     );
-//   }
-// });
+    bot.sendMessage(
+      msg.chat.id,
+      "⚠️ Sorry, I had trouble generating a reply."
+    );
+  }
+});
 
-// bot.on("polling_error", (error) => {
-//   console.error("Polling error:", error.message);
-// });
+bot.on("polling_error", (error) => {
+  console.error("Polling error:", error.message);
+});
 
 /* =========================
    START SERVER
