@@ -99,7 +99,7 @@ Important knowledge:
 
 async function sendInstagramMessage(recipientId, messageText) {
   try {
-    await fetch(
+    const result = await fetch(
       `https://graph.facebook.com/v25.0/me/messages?access_token=${process.env.INSTAGRAM_PAGE_ACCESS_TOKEN}`,
       {
         method: "POST",
@@ -118,7 +118,9 @@ async function sendInstagramMessage(recipientId, messageText) {
       }
     );
 
-    console.log("Instagram reply sent");
+    const data = await result.json();
+    console.log("Instagram send status:", result.status);
+    console.log("Instagram send response:", data);
   } catch (error) {
     console.error("Instagram send error:", error.message);
   }
