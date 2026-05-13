@@ -96,14 +96,11 @@ Important knowledge:
 /* =========================
    SEND INSTAGRAM MESSAGE
 ========================= */
-/* =========================
-   SEND INSTAGRAM MESSAGE
-========================= */
 
 async function sendInstagramMessage(recipientId, messageText) {
   try {
     await fetch(
-      `https://graph.facebook.com/v25.0/me/messages?access_token=${process.env.INSTAGRAM_PAGE_ACCESS_TOKEN}`,
+      `https://graph.instagram.com/v25.0/me/messages?access_token=${process.env.INSTAGRAM_PAGE_ACCESS_TOKEN}`,
       {
         method: "POST",
         headers: {
@@ -113,7 +110,6 @@ async function sendInstagramMessage(recipientId, messageText) {
           recipient: {
             id: recipientId,
           },
-          messaging_type: "RESPONSE",
           message: {
             text: messageText,
           },
