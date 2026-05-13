@@ -100,7 +100,7 @@ Important knowledge:
 async function sendInstagramMessage(recipientId, messageText) {
   try {
     await fetch(
-      `https://graph.facebook.com/v25.0/me/messages?access_token=${process.env.INSTAGRAM_PAGE_ACCESS_TOKEN}`,
+      `https://graph.instagram.com/v25.0/me/messages?access_token=${process.env.INSTAGRAM_PAGE_ACCESS_TOKEN}`,
       {
         method: "POST",
         headers: {
